@@ -41,5 +41,65 @@ classdef KukaLwr4Robot
 
             ret = DQ_SerialManipulatorDH(kuka_DH_matrix,'standard');
         end
+
+        function ret = dynamics()
+             %Standard D-H of KUKA-LWR
+            kuka_DH_theta=[0, pi, 0, 0, 0, 0, 0];
+            kuka_DH_d = [0.310, 0, 0.4, 0, 0.39, 0, 0];
+            kuka_DH_a = [0, 0, 0, 0, 0, 0, 0];
+            kuka_DH_alpha = [pi/2, pi/2, -pi/2, pi/2, pi/2, -pi/2, 0];
+            kuka_DH_type = repmat(DQ_SerialManipulatorDH.JOINT_ROTATIONAL,1,7);
+            kuka_DH_matrix = [kuka_DH_theta;
+                kuka_DH_d;
+                kuka_DH_a;
+                kuka_DH_alpha;
+                kuka_DH_type];
+            
+            % Dynamic properties
+            % Position of the center of mass (V-REP)
+            pcm = [  0.0002, -0.0804,  0.0257;
+                     0.0000,  0.0277, -0.1112;
+                    -0.0001, -0.0804, -0.0277;
+                     0.0000, -0.0257, -0.1111;
+                     0.0000, -0.0956,  0.0254;
+                     0.0002,  0.0088, -0.0733;
+                     0.0000, -0.0005,  0.0000];
+            
+            % Mass definition (V-REP)
+            mass = [2.7000, 2.7000, 2.7000, 2.7000, 1.7000, 1.6000, 0.3000]';
+
+            % Inertia tensor definition (V-REP)
+            inertia_tensor(:,:,1) = [  0.0163, -0.0000, -0.0000;
+                                      -0.0000,  0.0050, -0.0035;
+                                      -0.0000, -0.0035,  0.0162];
+            inertia_tensor(:,:,2) = [  0.0163, -0.0000,  0.0000;
+                                      -0.0000,  0.0162,  0.0035;
+                                       0.0000,  0.0035,  0.0050];
+            inertia_tensor(:,:,3) = [  0.0163,  0.0000, -0.0000;
+                                       0.0000,  0.0050,  0.0035;
+                                      -0.0000,  0.0035,  0.0162];
+            inertia_tensor(:,:,4) = [  0.0163, -0.0000, -0.0000;
+                                      -0.0000,  0.0162, -0.0035;
+                                      -0.0000, -0.0035,  0.0050];
+            inertia_tensor(:,:,5) = [  0.0098,  0.0000,  0.0000;
+                                       0.0000,  0.0037, -0.0031;
+                                       0.0000, -0.0031,  0.0091];
+            inertia_tensor(:,:,6) = [  0.0030,  0.0000, -0.0000;
+                                       0.0000,  0.0030, -0.0000;
+                                      -0.0000, -0.0000,  0.0034];
+            inertia_tensor(:,:,7) = 1.0e-03*[  0.1017,  0.0000, -0.0000;
+                                               0.0000,  0.1017, -0.0000;
+                                              -0.0000, -0.0000,  0.1584];
+            
+            % Gravity acceleration definition
+            gravity_acceleration = 9.81;
+            
+            ret = DQ_SerialManipulatorDynamics(kuka_DH_matrix, 'standard', pcm, mass, inertia_tensor, gravity_acceleration);
+            ret.name = 'KUKALBR4Dyn';
+
+            % Set the end-effector
+            ret.set_effector(1+0.5*DQ.E*DQ.k*0.07);
+        end
+
     end
 end

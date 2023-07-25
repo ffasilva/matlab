@@ -53,7 +53,7 @@ classdef FrankaEmikaPandaVrepRobot < DQ_VrepRobot
         joint_names;
         base_frame_name;
         force_sensor_names;
-        link_names;
+        link_names = {};
         lua_script_name;
     end
 
