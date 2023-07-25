@@ -56,6 +56,29 @@ classdef FrankaEmikaPandaVrepRobot < DQ_VrepRobot
         link_names;
         lua_script_name;
     end
+
+    methods (Access = protected)
+        function update_dynamic_parameters(obj, robot_dynamics)
+            n = robot_dynamics.dim_configuration_space;
+            mass = zeros(n,1);
+            center_of_mass = zeros(n,3);
+            inertia_tensor = zeros(3,3,n);
+            for i=1:n
+                mass(i) = obj.vrep_interface.get_mass(obj.link_names{i});
+                if(i<n)
+                    center_of_mass(i,:) = obj.vrep_interface.get_center_of_mass(obj.link_names{i}, obj.joint_names{i+1});
+                    inertia_tensor(:,:,i) = obj.vrep_interface.get_inertia_matrix(obj.link_names{i}, obj.joint_names{i+1});
+                else
+                    center_of_mass(i,:) = obj.vrep_interface.get_center_of_mass(obj.link_names{i}, obj.joint_names{i});
+                    inertia_tensor(:,:,i) = obj.vrep_interface.get_inertia_matrix(obj.link_names{i}, obj.joint_names{i});
+                end
+            end
+
+            robot_dynamics.set_mass(mass);
+            robot_dynamics.set_position_center_mass(center_of_mass);
+            robot_dynamics.set_inertia_tensor(inertia_tensor);
+        end
+    end
     
     methods
         function obj = FrankaEmikaPandaVrepRobot(robot_name,vrep_interface)
@@ -153,6 +176,33 @@ classdef FrankaEmikaPandaVrepRobot < DQ_VrepRobot
 
             % Set the end-effector
             kin.set_effector(1+0.5*DQ.E*DQ.k*0.1820);
-        end        
+        end
+
+        function dyn = dynamics(obj, lua_script_name)
+            %% Obtains the DQ_SerialManipulatorDynamics instance that represents this Jaco robot.
+            %  >> vrep_robot = JacoVrepRobot('Jaco', vi)
+            %  >> lua_script_name = 'MyLuaScript'
+            %  >> robot_dynamics = vrep_robot.dynamics(lua_script_name)
+            
+            % Set the Lua script name
+            obj.lua_script_name = lua_script_name;
+            
+            % Create a DQ_SerialManipulatorDynamics object
+            dyn = FrankaEmikaPandaRobot.dynamics;
+
+            % Set the robot configuration with V-REP values
+            q_read = obj.get_q_from_vrep(); 
+            q_read_dot = obj.get_q_dot_from_vrep();
+            q_read_dot_dot = zeros(dyn.get_dim_configuration_space,1);
+
+            dyn.set_joint_configuration(q_read, q_read_dot, q_read_dot_dot);
+            
+            % Update base and reference frame with V-REP values
+            dyn.set_base_frame(obj.vrep_interface.get_object_pose(obj.base_frame_name));
+            dyn.set_reference_frame(obj.vrep_interface.get_object_pose(obj.base_frame_name));
+            
+            % Update dynamic parameters with V-REP information
+            obj.update_dynamic_parameters(dyn);
+        end
     end
 end

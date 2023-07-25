@@ -44,9 +44,10 @@
 %       set_object_rotation - Set object rotation with a unit quaternion
 %       get_object_pose - Get object pose as a unit dual quaternion
 %       set_object_pose - Set object pose with a unit dual quaternion
-%       get_center_of_mass - Get the object center of mass
-%       get_mass- Get the object mass
-%       get_inertia_matrix - Get the object inertia tensor
+%       get_object_twist - Get object twist as a pure dual quaternion
+%       get_center_of_mass - Get the object center of mass as a vector
+%       get_mass- Get the object mass as a real number
+%       get_inertia_matrix - Get the object inertia tensor as a matrix
 %       set_joint_positions - Set the joint positions of a robot
 %       set_joint_target_positions - Set the joint target positions of a
 %       robot
@@ -753,7 +754,7 @@ classdef DQ_VrepInterface < handle
             end
         end   
 
-        function [xi,return_code] = get_object_twist(obj, handle_or_name, opmode) % get_object_velocities
+        function [xi,return_code] = get_object_twist(obj, handle_or_name, opmode)
             % This method gets the twist of an object in the CoppeliaSim scene.
             %
             % Usage:
@@ -844,7 +845,6 @@ classdef DQ_VrepInterface < handle
             %      center_of_mass = get_center_of_mass('/Jaco/Jaco_link2', '/Jaco/Jaco_joint2', 'my_get_center_of_mass', 'my_DQRoboticsApiCommandServer');
 
             obj_handle = obj.handle_from_string_or_handle(obj_handle_or_name);
-            ref_frame_handle = obj.handle_from_string_or_handle(ref_frame_handle_or_name);
 
             if nargin == 2 % the call was 'center_of_mass = get_center_of_mass(handle)'
                 [return_code,~,center_of_mass,~,~] = obj.call_script_function(obj.DF_LUA_SCRIPT_API, obj.ST_CHILD, 'get_center_of_mass', obj_handle, [], [], []);
@@ -856,6 +856,8 @@ classdef DQ_VrepInterface < handle
                     center_of_mass = double(center_of_mass);
                 end
             elseif nargin == 3 % the call was 'center_of_mass = get_center_of_mass(handle, reference_frame)'
+                ref_frame_handle = obj.handle_from_string_or_handle(ref_frame_handle_or_name);
+
                 [return_code,~,center_of_mass,~,~] = obj.call_script_function(obj.DF_LUA_SCRIPT_API, obj.ST_CHILD, 'get_center_of_mass', [obj_handle, ref_frame_handle], [], [], []);
                 if(return_code ~= 0)
                     formatSpec = 'Script function `get_center_of_mass` returned with error code %i.\n';
@@ -865,6 +867,8 @@ classdef DQ_VrepInterface < handle
                     center_of_mass = double(center_of_mass);
                 end
             elseif nargin == 4 % the call was 'center_of_mass = get_center_of_mass(handle, reference_frame, function_name)'
+                ref_frame_handle = obj.handle_from_string_or_handle(ref_frame_handle_or_name);
+
                 [return_code,~,center_of_mass,~,~] = obj.call_script_function(obj.DF_LUA_SCRIPT_API, obj.ST_CHILD, function_name, [obj_handle, ref_frame_handle], [], [], []);
                 if(return_code ~= 0)
                     formatSpec = 'Script function %s returned with error code %i.\n';
@@ -874,6 +878,8 @@ classdef DQ_VrepInterface < handle
                     center_of_mass = double(center_of_mass);
                 end
             else % the call was 'center_of_mass = get_center_of_mass(handle, reference_frame, function_name, obj_name)'
+                ref_frame_handle = obj.handle_from_string_or_handle(ref_frame_handle_or_name);
+
                 [return_code,~,center_of_mass,~,~] = obj.call_script_function(obj_script_name, obj.ST_CHILD, function_name, [obj_handle, ref_frame_handle], [], [], []);
                 if(return_code ~= 0)
                     formatSpec = 'Script function %s returned with error code %i.\n';
@@ -978,7 +984,6 @@ classdef DQ_VrepInterface < handle
             %      inertia_tensor = get_inertia_matrix('/Jaco/Jaco_link2', '/Jaco/Jaco_joint2', 'my_get_center_of_mass', 'my_DQRoboticsApiCommandServer');
 
             obj_handle = obj.handle_from_string_or_handle(obj_handle_or_name);
-            ref_frame_handle = obj.handle_from_string_or_handle(ref_frame_handle_or_name);
 
             if nargin == 2 % the call was 'inertia_tensor =  get_inertia_matrix(handle)'
                 [return_code,~,inertia_tensor,~,~] = obj.call_script_function(obj.DF_LUA_SCRIPT_API, obj.ST_CHILD, 'get_inertia', obj_handle, [], [], []);
@@ -990,6 +995,8 @@ classdef DQ_VrepInterface < handle
                     inertia_tensor = double(reshape(inertia_tensor,3,3));
                 end
             elseif nargin == 3 % the call was 'inertia_tensor =  get_inertia_matrix(handle, reference_frame)'
+                ref_frame_handle = obj.handle_from_string_or_handle(ref_frame_handle_or_name);
+
                 [return_code,~,inertia_tensor,~,~] = obj.call_script_function(obj.DF_LUA_SCRIPT_API, obj.ST_CHILD, 'get_inertia', [obj_handle, ref_frame_handle], [], [], []);
                 if(return_code ~= 0)
                     formatSpec = 'Script function `get_inertia` returned with error code %i.\n';
@@ -999,6 +1006,8 @@ classdef DQ_VrepInterface < handle
                     inertia_tensor = double(reshape(inertia_tensor,3,3));
                 end
             elseif nargin == 4 % the call was 'inertia_tensor =  get_inertia_matrix(handle, reference_frame, function_name)'
+                ref_frame_handle = obj.handle_from_string_or_handle(ref_frame_handle_or_name);
+
                 [return_code,~,inertia_tensor,~,~] = obj.call_script_function(obj.DF_LUA_SCRIPT_API, obj.ST_CHILD, function_name, [obj_handle, ref_frame_handle], [], [], []);
                 if(return_code ~= 0)
                     formatSpec = 'Script function %s returned with error code %i.\n';
@@ -1008,6 +1017,8 @@ classdef DQ_VrepInterface < handle
                     inertia_tensor = double(reshape(inertia_tensor,3,3));
                 end
             else % the call was 'inertia_tensor =  get_inertia_matrix(handle, reference_frame, function_name, obj_name)'
+                ref_frame_handle = obj.handle_from_string_or_handle(ref_frame_handle_or_name);
+                
                 [return_code,~,inertia_tensor,~,~] = obj.call_script_function(obj_script_name, obj.ST_CHILD, function_name, [obj_handle, ref_frame_handle], [], [], []);
                 if(return_code ~= 0)
                     formatSpec = 'Script function %s returned with error code %i.\n';
