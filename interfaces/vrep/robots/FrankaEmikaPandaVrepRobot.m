@@ -110,7 +110,7 @@ classdef FrankaEmikaPandaVrepRobot < DQ_VrepRobot
                 current_joint_name = {robot_label,'_joint',int2str(i),robot_index};
                 obj.joint_names{i} = strjoin(current_joint_name,'');
                 
-                current_link_name = {robot_label,'_link',int2str(i+1),robot_index};
+                current_link_name = {robot_label,'_link',int2str(i+1),'_resp',robot_index};
                 obj.link_names{i} = strjoin(current_link_name,'');
             end
             obj.base_frame_name = obj.joint_names{1};

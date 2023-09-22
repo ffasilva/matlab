@@ -759,12 +759,12 @@ classdef DQ_VrepInterface < handle
             %
             % Usage:
             %     Recommended:
-            %      xi = get_object_twist(handle, opmode);
-            %      [xi,return_code] = get_object_velocities(handle, opmode);
+            %      xi = get_object_twist(handle);
+            %      [xi,return_code] = get_object_twist(handle);
             %
             %     Advanced:
             %      xi = get_object_twist(handle, opmode);
-            %      [xi,return_code] = get_object_velocities(handle, opmode);
+            %      [xi,return_code] = get_object_twist(handle, opmode);
             %
             %          handle_or_name: The object's handle or name.
             %          (optional) opmode: The operation mode. If not
