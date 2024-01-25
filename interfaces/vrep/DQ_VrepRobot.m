@@ -5,8 +5,8 @@
 %   Inherit from this class and implement the abstract methods.
 %
 %   DQ_VrepRobot Methods:
-%       send_q_to_vrep - Sends the joint configurations to VREP
-%       get_q_from_vrep - Obtains the joint configurations from VREP
+%       set_configuration_space_positions - Sends the joint configurations to the robot in the CoppeliaSim scene.
+%       get_configuration_space_positions - Obtains the joint configurations to the robot in the CoppeliaSim scene.
 %       kinematics - Obtains the DQ_Kinematics implementation of this
 %       robot
 
@@ -30,7 +30,15 @@
 % DQ Robotics website: dqrobotics.sourceforge.net
 %
 % Contributors to this file:
-%     Murilo Marques Marinho - murilo@nml.t.u-tokyo.ac.jp
+%     1. Murilo Marques Marinho - murilo@nml.t.u-tokyo.ac.jp
+%     2. Frederico Fernandes Afonso Silva (frederico.silva@ieee.org)
+%       - Altered the names of the following methods to ensure
+%       compatibility with the C++ version of the class:
+%             - 'send_q_to_vrep' became 'set_configuration_space_positions'
+%             - 'get_q_from_vrep' became 'get_configuration_space_positions'
+%       - Removed the following methods to ensure compatibility with the
+%       C++ version of the class:
+%             - 'kinematics'
 
 classdef (Abstract) DQ_VrepRobot
     
@@ -40,9 +48,8 @@ classdef (Abstract) DQ_VrepRobot
     end
     
     methods (Abstract)
-        send_q_to_vrep(obj,q);
-        q = get_q_from_vrep(obj);
-        kin = kinematics(obj);
+        set_configuration_space_positions(obj,q);
+        q = get_configuration_space_positions(obj);
     end
 end
 
