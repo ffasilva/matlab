@@ -55,19 +55,27 @@ classdef DQ_SerialVrepRobot < DQ_VrepRobot
 
     methods (Access = protected)
         function update_dynamic_parameters(obj, robot_dynamics)
+            q_read = robot_dynamics.get_joint_configuration;
             n = robot_dynamics.dim_configuration_space;
             mass = zeros(n,1);
             center_of_mass = zeros(n,3);
             inertia_tensor = zeros(3,3,n);
             for i=1:n
+                % Get the link's mass
                 mass(i) = obj.vrep_interface.get_mass(obj.link_names{i});
-                if(i<n)
-                    center_of_mass(i,:) = obj.vrep_interface.get_center_of_mass(obj.link_names{i}, obj.joint_names{i+1});
-                    inertia_tensor(:,:,i) = obj.vrep_interface.get_inertia_matrix(obj.link_names{i}, obj.joint_names{i+1});
-                else
-                    center_of_mass(i,:) = obj.vrep_interface.get_center_of_mass(obj.link_names{i}, obj.joint_names{i});
-                    inertia_tensor(:,:,i) = obj.vrep_interface.get_inertia_matrix(obj.link_names{i}, obj.joint_names{i});
-                end
+
+                % Get the link's center of mass position with respect to the end-link frame
+                pcm_in_0 = DQ(obj.vrep_interface.get_center_of_mass(obj.link_names{i}, -1));
+                rcm_in_0 = obj.vrep_interface.get_object_rotation(obj.link_names{i});
+                xcm_in_0 = rcm_in_0 + (1/2)*DQ.E*pcm_in_0*rcm_in_0;
+                xl_in_0 = robot_dynamics.fkm(q_read,i);
+                xcm_in_xl = (xl_in_0')*xcm_in_0;
+                center_of_mass(i,:) = vec3(xcm_in_xl.translation)';
+
+                % Get the link's inertia tensor with respect to the end-link frame
+                inertia_tensor_in_0 = obj.vrep_interface.get_inertia_matrix(obj.link_names{i}, -1);
+                Rcm_in_0 = rotation_matrix_from_quaternion(xcm_in_0.P);
+                inertia_tensor(:,:,i) = Rcm_in_0'*inertia_tensor_in_0*Rcm_in_0;
             end
 
             robot_dynamics.set_mass(mass);
