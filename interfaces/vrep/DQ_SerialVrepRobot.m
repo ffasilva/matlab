@@ -21,6 +21,8 @@
 %       send_q_to_vrep - Sends the joint configurations to VREP
 %       get_q_from_vrep - Obtains the joint configurations from VREP
 %       kinematics - Obtains the DQ_Kinematics implementation of this robot
+%   DQ_SerialVrepRobot Methods (Protected):
+%       update_manipulator_dynamic_parameters - Updates the dynamic parameters of the serial robot in the CoppeliaSim scene
 
 % (C) Copyright 2018-2023 DQ Robotics Developers
 %
@@ -55,6 +57,14 @@ classdef DQ_SerialVrepRobot < DQ_VrepRobot
 
     methods (Access = protected)
         function update_dynamic_parameters(obj, robot_dynamics)
+            % This method updates the dynamic parameters of the serial robot in the CoppeliaSim scene.
+            % Usage:
+            %     update_dynamic_parameters(robot_dynamics);
+            %          robot_dynamics: A DQ_SerialManipulatorDynamics object representing the robot in the CoppeliaSim scene.
+            %     
+            %     Note that this is a protected method and, as such, can only be used by classes that inherit from
+            %     DQ_SerialVrepRobot.
+
             q_read = robot_dynamics.get_joint_configuration;
             n = robot_dynamics.dim_configuration_space;
             mass = zeros(n,1);
