@@ -47,23 +47,22 @@
 
 classdef DQ_BranchedVrepRobot < DQ_SerialVrepRobot
     methods (Access = protected)
-        function update_dynamic_parameters(obj, robot_dynamics)
-            % This method updates the dynamic parameters of the branched robot in the CoppeliaSim scene.
+        function update_base_dynamic_parameters(obj, robot_dynamics)
+            % This method updates the dynamic parameters of the branched robot's base in the CoppeliaSim scene.
             % Usage:
             %     update_dynamic_parameters(robot_dynamics);
-            %          robot_dynamics: A DQ_BranchedWholeBody object representing the robot in the CoppeliaSim scene.
+            %          robot_dynamics: A DQ_HolonomicBaseDynamics or a DQ_FreeFlyingRobotDynamics object representing the robot's base in the CoppeliaSim scene.
             %     
             %     Note that this is a protected method and, as such, can only be used by classes that inherit from
             %     DQ_BranchedVrepRobot.
 
-            name_index = 1;
-            for i=1:length(robot_dynamics.get_chain)
-                formatSpec = 'Updating dynamic parameters of the %ith branch...\n';
-                fprintf(formatSpec,i);
-                obj.update_branch_dynamic_parameters(robot_dynamics.get_chain{i}, name_index);
+            mass = obj.vrep_interface.get_mass(obj.base_frame_name);
+            center_of_mass = obj.vrep_interface.get_center_of_mass(obj.base_frame_name);
+            inertia_tensor = obj.vrep_interface.get_inertia_matrix(obj.base_frame_name);
 
-                name_index = name_index + length(robot_dynamics.get_chain{i}.q);
-            end
+            robot_dynamics.set_mass(mass);
+            robot_dynamics.set_position_center_mass(center_of_mass);
+            robot_dynamics.set_inertia_tensor(inertia_tensor);
         end
 
         function update_branch_dynamic_parameters(obj, robot_dynamics, name_index)
@@ -76,11 +75,12 @@ classdef DQ_BranchedVrepRobot < DQ_SerialVrepRobot
             %     Note that this is a protected method and, as such, can only be used by classes that inherit from
             %     DQ_BranchedVrepRobot.
 
-            q_read = robot_dynamics.get_joint_configuration;
             n = robot_dynamics.dim_configuration_space;
             mass = zeros(n,1);
             center_of_mass = zeros(n,3);
             inertia_tensor = zeros(3,3,n);
+
+            q_read = robot_dynamics.get_joint_configuration;
             for i=1:n
                 % Get the link's mass
                 mass(i) = obj.vrep_interface.get_mass(obj.link_names{name_index});
@@ -104,6 +104,41 @@ classdef DQ_BranchedVrepRobot < DQ_SerialVrepRobot
             robot_dynamics.set_mass(mass);
             robot_dynamics.set_position_center_mass(center_of_mass);
             robot_dynamics.set_inertia_tensor(inertia_tensor);
+        end
+
+        function update_dynamic_parameters(obj, robot_dynamics)
+            % This method updates the dynamic parameters of the branched robot in the CoppeliaSim scene.
+            % Usage:
+            %     update_dynamic_parameters(robot_dynamics);
+            %          robot_dynamics: A DQ_BranchedWholeBody object representing the robot in the CoppeliaSim scene.
+            %     
+            %     Note that this is a protected method and, as such, can only be used by classes that inherit from
+            %     DQ_BranchedVrepRobot.
+
+            if(isa(robot_dynamics.get_chain{1},'DQ_HolonomicBaseDynamics') || isa(robot_dynamics.get_chain{1},'DQ_FreeFlyingRobotDynamics'))
+                formatSpec = 'Updating dynamic parameters of the 1st branch...\n';
+                fprintf(formatSpec);
+                obj.update_base_dynamic_parameters(robot_dynamics.get_chain{1});
+                
+                name_index = 1;
+                for i=2:length(robot_dynamics.get_chain)
+                    formatSpec = 'Updating dynamic parameters of the %ith branch...\n';
+                    fprintf(formatSpec,i);
+                    obj.update_branch_dynamic_parameters(robot_dynamics.get_chain{i}, name_index);
+    
+                    name_index = name_index + length(robot_dynamics.get_chain{i}.q);
+                end
+                disp('Finished updating the dynamic parameters of the robot!')
+            else % is a fixed-base branched robot
+                name_index = 1;
+                for i=1:length(robot_dynamics.get_chain)
+                    formatSpec = 'Updating dynamic parameters of the %ith branch...\n';
+                    fprintf(formatSpec,i);
+                    obj.update_branch_dynamic_parameters(robot_dynamics.get_chain{i}, name_index);
+    
+                    name_index = name_index + length(robot_dynamics.get_chain{i}.q);
+                end
+            end
         end
     end
 
